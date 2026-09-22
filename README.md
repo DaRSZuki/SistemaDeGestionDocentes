@@ -321,3 +321,7 @@ corresponda si vas a publicar el repositorio (por ejemplo, uso educativo o
 Desarrollado por **[Tu nombre]** como proyecto de portafolio / evidencia de
 trabajo.
 <!-- Contacto: agregá aquí tu LinkedIn, correo o sitio si querés que quede visible en el repositorio. -->
+=======
+# SistemaDeGestionDocentes
+Sistema de gestión administrativa para colegios, permite control de asistencias y control de notas de estudiantes. 
+>>>>>>> d7577aa4531fd2e8bc82e14c7012e775f88f9fd2
