@@ -311,16 +311,13 @@ build_exe.bat       Construir el .exe
   hay que pulsar **"Permitir acceso"** (redes privadas).
 
 ## 12. Licencia
-
-Proyecto desarrollado como trabajo a medida. Agregá aquí la licencia que
-corresponda si vas a publicar el repositorio (por ejemplo, uso educativo o
-`MIT` si el código se puede reutilizar libremente).
+Uso exclusivo con fines de educativos o referencia de código, su uso comercial no está autorizado 
 
 ## 13. Autor
 
-Desarrollado por **[Tu nombre]** como proyecto de portafolio / evidencia de
+Desarrollado por David Norberto Ruiz Suasnava como proyecto de portafolio / evidencia de
 trabajo.
-<!-- Contacto: agregá aquí tu LinkedIn, correo o sitio si querés que quede visible en el repositorio. -->
+Contacto: https://www.linkedin.com/in/david-norberto-ruiz-suasn%C3%A1var-51b3052b6/
 =======
 # SistemaDeGestionDocentes
 Sistema de gestión administrativa para colegios, permite control de asistencias y control de notas de estudiantes. 
