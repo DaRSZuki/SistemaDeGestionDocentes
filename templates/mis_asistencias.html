@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Mi historial de asistencia{% endblock %}
+{% block body %}
+<h1>Mi historial de asistencia</h1>
+<form class="inline" method="get" style="margin-bottom:16px">
+  <div><label>Año</label>
+    <select name="anio" onchange="this.form.submit()">
+      {% for a in anios %}<option value="{{ a }}" {{ 'selected' if a|string == anio|string }}>{{ a }}</option>{% endfor %}
+    </select>
+  </div>
+</form>
+
+<div class="panel">
+  <h2 style="margin-top:0">Resumen {{ anio }}</h2>
+  <table>
+    <tr><th>Mes</th><th>Días presente</th><th>Ausencias</th><th>Justificadas</th>
+        <th>Días con atraso</th><th>Minutos de atraso</th><th>% Puntualidad</th></tr>
+    {% for f in filas %}
+    <tr>
+      <td>{{ f['mes'] }}</td><td>{{ f['presentes'] }}</td><td>{{ f['ausentes'] }}</td>
+      <td>{{ f['justificados'] }}</td><td>{{ f['dias_atraso'] }}</td>
+      <td>{{ f['minutos_atraso'] }}</td><td>{{ '%.0f'|format(f['puntualidad']) }}%</td>
+    </tr>
+    {% endfor %}
+    <tr style="font-weight:700;background:#f0e6cf">
+      <td>TOTAL AÑO</td><td>{{ totales['presentes'] }}</td><td>{{ totales['ausentes'] }}</td>
+      <td>{{ totales['justificados'] }}</td><td>{{ totales['dias_atraso'] }}</td>
+      <td>{{ totales['minutos_atraso'] }}</td><td>{{ '%.0f'|format(totales['puntualidad']) }}%</td>
+    </tr>
+  </table>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Detalle de días</h2>
+  <table>
+    <tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Atraso</th><th>Estado</th><th>Observación</th></tr>
+    {% for r in registros %}
+    <tr>
+      <td>{{ r['fecha'] }}</td>
+      <td>{{ r['hora_entrada'] or '—' }}</td>
+      <td>{{ r['hora_salida'] or '—' }}</td>
+      <td>{% if r['minutos_atraso'] and r['minutos_atraso'] > 0 %}<span class="reprobado">{{ r['minutos_atraso'] }} min</span>{% else %}0{% endif %}</td>
+      <td>{{ r['estado']|capitalize }}{% if r['modificado_admin'] %} <span class="pill gris">ajustado</span>{% endif %}</td>
+      <td class="muted">{{ r['observacion'] or '' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">Sin registros para {{ anio }}.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

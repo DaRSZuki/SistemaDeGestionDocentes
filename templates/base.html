@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Liceo Italiano Trilingüe{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="icon" href="{{ url_for('logo_png') }}">
+</head>
+<body>
+{% if usuario %}
+<header class="top">
+  <img src="{{ url_for('logo_png') }}" alt="Logo"
+       onerror="this.style.display='none'">
+  <div class="titulo">LICEO ITALIANO TRILINGÜE
+    <small>Sistema de Gestión y Administración</small>
+  </div>
+  <nav>
+    {% if usuario['rol'] == 'admin' %}
+      <a href="{{ url_for('admin_home') }}">Inicio</a>
+      <a href="{{ url_for('admin_usuarios') }}">Usuarios</a>
+      <a href="{{ url_for('admin_asistencia') }}">Asistencia</a>
+      <a href="{{ url_for('admin_reportes') }}">Reportes</a>
+      <a href="{{ url_for('boletas_grados') }}">Boletas</a>
+      <a href="{{ url_for('admin_auditoria') }}">Auditoría</a>
+    {% else %}
+      <a href="{{ url_for('panel') }}">Mi asistencia</a>
+      <a href="{{ url_for('mis_asistencias') }}">Mi historial</a>
+      {% if ver_boletas %}<a href="{{ url_for('boletas_grados') }}">Boletas</a>{% endif %}
+    {% endif %}
+    <a href="{{ url_for('cambiar_clave') }}">Clave</a>
+    <a href="{{ url_for('logout') }}">Salir ({{ usuario['username'] }})</a>
+  </nav>
+</header>
+{% endif %}
+
+<div class="contenedor">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block body %}{% endblock %}
+</div>
+<footer>Liceo Italiano Trilingüe — sistema local · {{ ahora.year }}</footer>
+{% block scripts %}{% endblock %}
+{% if usuario %}
+<script>
+(function () {
+  // ------- Cierre de sesión al cerrar la pestaña del navegador -------
+  // 'liceo_sesion' vive en sessionStorage: se borra cuando la pestaña se cierra.
+  try {
+    if (sessionStorage.getItem('liceo_sesion') !== '1') {
+      window.location.replace("{{ url_for('logout', motivo='pestana') }}");
+      return;
+    }
+  } catch (e) { /* sessionStorage no disponible: se omite este control */ }
+
+  // ------- Cierre de sesión tras {{ inactividad_seg }} s de inactividad -------
+  var MAX_MS = {{ inactividad_seg }} * 1000;
+  var timer = null, ultimoPing = 0;
+
+  function cerrarPorInactividad() {
+    window.location.replace("{{ url_for('logout', motivo='inactividad') }}");
+  }
+  function avisarActividad() {
+    var t = Date.now();
+    if (t - ultimoPing < 60000) return;      // como máximo un aviso por minuto
+    ultimoPing = t;
+    try { navigator.sendBeacon("{{ url_for('sesion_ping') }}"); }
+    catch (e) { try { fetch("{{ url_for('sesion_ping') }}", { method: 'POST' }); } catch (_) {} }
+  }
+  function reiniciar() {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(cerrarPorInactividad, MAX_MS);
+    avisarActividad();
+  }
+  ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach(function (ev) {
+    document.addEventListener(ev, reiniciar, { passive: true });
+  });
+  reiniciar();
+})();
+</script>
+{% endif %}
+</body>
+</html>

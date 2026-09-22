@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------
+# Datos reales del colegio: base de datos, boletas, reportes,
+# configuracion de red y clave de sesion. NUNCA deben subirse.
+# Se generan solos la primera vez que se ejecuta el sistema.
+# ---------------------------------------------------------------
+datos/
+*.db
+*.sqlite
+*.sqlite3
+
+# ---------------------------------------------------------------
+# Logo real del colegio: se deja fuera por defecto (posible marca
+# del colegio). Si querés publicarlo, borra estas dos lineas.
+# Ver static/img/LEER_logo.txt para instrucciones.
+# ---------------------------------------------------------------
+static/img/logo.png
+static/img/logo.jpg
+static/img/logo.jpeg
+static/img/logo.ico
+
+# ---------------------------------------------------------------
+# Empaquetado con PyInstaller (se regenera con build_exe.bat)
+# ---------------------------------------------------------------
+build/
+dist/
+*.spec
+
+# ---------------------------------------------------------------
+# Entornos virtuales de Python
+# ---------------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+
+# ---------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.log
+
+# ---------------------------------------------------------------
+# Editor / herramientas locales (no forman parte del proyecto)
+# ---------------------------------------------------------------
+.vscode/
+.idea/
+.claude/
+
+# ---------------------------------------------------------------
+# Sistema operativo
+# ---------------------------------------------------------------
+Thumbs.db
+desktop.ini
+.DS_Store

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Horarios de {{ u['username'] }}{% endblock %}
+{% block body %}
+<h1>Horario semanal — {{ u['apellidos'] }}, {{ u['nombres'] }}</h1>
+<p class="sub">Defina un horario distinto por cada día de la semana. La tolerancia son los
+minutos permitidos antes de contar atraso.</p>
+
+<div class="panel">
+  <form method="post">
+    <table>
+      <tr><th>Día</th><th>Laborable</th><th>Hora de entrada</th><th>Hora de salida</th><th>Tolerancia (min)</th></tr>
+      {% for d in range(7) %}
+      {% set h = horarios.get(d) %}
+      <tr>
+        <td>{{ dias[d] }}</td>
+        <td><input type="checkbox" name="lab_{{ d }}" {{ 'checked' if (h and h['laborable']) or (not h and d < 5) }}></td>
+        <td><input type="time" name="ent_{{ d }}" value="{{ h['hora_entrada'] if h and h['hora_entrada'] else '' }}"></td>
+        <td><input type="time" name="sal_{{ d }}" value="{{ h['hora_salida'] if h and h['hora_salida'] else '' }}"></td>
+        <td><input type="number" min="0" max="120" name="tol_{{ d }}" value="{{ h['tolerancia_min'] if h else 0 }}"></td>
+      </tr>
+      {% endfor %}
+    </table>
+    <br><button class="btn">Guardar horario</button>
+    <a class="btn sec" href="{{ url_for('admin_usuarios') }}">Volver</a>
+  </form>
+</div>
+{% endblock %}

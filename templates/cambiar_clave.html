@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Cambiar contraseña{% endblock %}
+{% block body %}
+<h1>Cambiar contraseña</h1>
+<p class="sub">Usuario: <b>{{ usuario['username'] }}</b></p>
+<div class="panel" style="max-width:420px">
+  <form method="post">
+    <label>Contraseña actual</label>
+    <input type="password" name="actual" required>
+    <label>Nueva contraseña</label>
+    <input type="password" name="nueva" minlength="4" required>
+    <br><br>
+    <button class="btn">Guardar</button>
+  </form>
+</div>
+{% endblock %}

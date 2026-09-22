@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Auditoría{% endblock %}
+{% block body %}
+<h1>Auditoría</h1>
+<p class="sub">Últimos 500 movimientos registrados en el sistema.</p>
+<div class="panel">
+  <table>
+    <tr><th>Fecha/hora</th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr>
+    {% for r in registros %}
+    <tr>
+      <td>{{ r['creado_en'][:19].replace('T',' ') }}</td>
+      <td>{{ r['username'] or '—' }}</td>
+      <td>{{ r['accion'] }}</td>
+      <td class="muted">{{ r['detalle'] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

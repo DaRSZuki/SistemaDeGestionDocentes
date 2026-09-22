@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Panel de administración{% endblock %}
+{% block body %}
+<h1>Panel de administración</h1>
+<p class="sub">{{ dia_semana_es }} {{ ahora.strftime('%d/%m/%Y %H:%M') }}</p>
+
+<div class="grid c4">
+  <div class="stat"><div class="n">{{ u_act }}</div><div class="t">docentes activos</div></div>
+  <div class="stat"><div class="n">{{ u_baja }}</div><div class="t">usuarios dados de baja</div></div>
+  <div class="stat"><div class="n">{{ grd }}</div><div class="t">grados</div></div>
+  <div class="stat"><div class="n">{{ est }}</div><div class="t">estudiantes</div></div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Marcas de asistencia de hoy ({{ hoy }})</h2>
+  <table>
+    <tr><th>Docente</th><th>Entrada</th><th>Salida</th><th>Atraso</th><th>Estado</th></tr>
+    {% for m in marcas %}
+    <tr>
+      <td>{{ m['apellidos'] }}, {{ m['nombres'] }}</td>
+      <td>{{ m['hora_entrada'] or '—' }}</td>
+      <td>{{ m['hora_salida'] or '—' }}</td>
+      <td>{% if m['minutos_atraso'] and m['minutos_atraso'] > 0 %}<span class="reprobado">{{ m['minutos_atraso'] }} min</span>{% else %}0{% endif %}</td>
+      <td>{{ m['estado']|capitalize }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">Aún no hay marcas registradas hoy.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="panel">
+  <div class="acciones">
+    <a class="btn" href="{{ url_for('admin_usuarios') }}">Gestionar usuarios</a>
+    <a class="btn sec" href="{{ url_for('admin_asistencia') }}">Justificar / ajustar asistencia</a>
+    <a class="btn sec" href="{{ url_for('admin_reportes') }}">Reportes de puntualidad</a>
+    <a class="btn sec" href="{{ url_for('boletas_grados') }}">Boletas y grados</a>
+  </div>
+</div>
+{% endblock %}

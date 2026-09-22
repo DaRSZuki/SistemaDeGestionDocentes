@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Boleta — {{ est['apellidos'] }}, {{ est['nombres'] }}{% endblock %}
+{% block body %}
+<h1>Boleta de calificaciones</h1>
+<p class="sub">
+  {{ grado['nombre'] }} · {{ grado['anio'] }} ·
+  {% if nivel == 'admin' %}<span class="pill ok">Edición</span>{% else %}<span class="pill gris">Solo lectura</span>{% endif %}
+  <a href="{{ url_for('boletas_grado', gid=grado['id']) }}">&larr; Volver al grado</a>
+</p>
+
+{% set editable = (nivel == 'admin') %}
+
+<form method="post" action="{{ url_for('boletas_guardar', eid=est['id']) }}">
+<div class="panel">
+  <h2 style="margin-top:0">Datos del estudiante</h2>
+  <div class="grid c4">
+    <div><label>Nombres</label><input name="nombres" value="{{ est['nombres'] }}" {{ '' if editable else 'readonly' }}></div>
+    <div><label>Apellidos</label><input name="apellidos" value="{{ est['apellidos'] }}" {{ '' if editable else 'readonly' }}></div>
+    <div><label>Código</label><input name="codigo" value="{{ est['codigo'] or '' }}" {{ '' if editable else 'readonly' }}></div>
+    <div><label>Grado</label><input value="{{ grado['nombre'] }}" readonly></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Notas por unidad</h2>
+  <p class="muted">
+    Los cursos se administran a nivel del <a href="{{ url_for('boletas_grado', gid=grado['id']) }}">grado</a>
+    y son los mismos para todos los estudiantes. Aquí solo se registran las notas.
+    Escala sobre 100 puntos; nota menor a {{ nota_min|int }} = curso reprobado (en rojo).
+  </p>
+  <table>
+    <tr><th>Curso</th><th>Unidad 1</th><th>Unidad 2</th><th>Unidad 3</th><th>Unidad 4</th><th>Promedio</th></tr>
+    {% for c, prom in cursos_prom %}
+    <tr>
+      <td>{{ c['nombre'] }}</td>
+      {% for u in ['u1','u2','u3','u4'] %}
+      <td>
+        {% if editable %}
+          <input type="number" min="0" max="100" step="0.01" name="{{ u }}_{{ c['curso_grado_id'] }}"
+                 value="{{ c[u] if c[u] is not none else '' }}"
+                 class="nota {{ 'reprobado' if c[u] is not none and c[u] < nota_min }}">
+        {% else %}
+          <span class="{{ 'reprobado' if c[u] is not none and c[u] < nota_min }}">{{ c[u] if c[u] is not none else '—' }}</span>
+        {% endif %}
+      </td>
+      {% endfor %}
+      <td class="{{ 'reprobado' if prom is not none and prom < nota_min }}">{{ '%.2f'|format(prom) if prom is not none else '—' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">Este grado todavía no tiene cursos.
+      <a href="{{ url_for('boletas_grado', gid=grado['id']) }}">Agréguelos aquí.</a></td></tr>
+    {% endfor %}
+    {% if cursos_prom %}
+    <tr style="font-weight:700;background:#f0e6cf">
+      <td colspan="5" style="text-align:right">PROMEDIO GENERAL (promedio de los promedios)</td>
+      <td class="{{ 'reprobado' if prom_general is not none and prom_general < nota_min }}">
+        {{ '%.2f'|format(prom_general) if prom_general is not none else '—' }}</td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Work Habits / Abitudini lavorative / Hábitos de trabajo</h2>
+  <p class="muted">Sección fija de la boleta. Solo se ajusta la calificación (A, B, C o D) por unidad.</p>
+  <table>
+    <tr>
+      <th>Work Habits / Abitudini lavorative / Hábitos de trabajo</th>
+      <th>I</th><th>II</th><th>III</th><th>IV</th>
+    </tr>
+    {% for clave, en, it, es, fila in comportamiento %}
+    <tr>
+      <td>{{ en }} / {{ it }} / {{ es }}</td>
+      {% for u in ['u1','u2','u3','u4'] %}
+      <td style="text-align:center">
+        {% set val = fila[u] if fila else None %}
+        {% if editable %}
+          <select name="cmp_{{ clave }}_{{ u }}" style="padding:4px">
+            <option value="">—</option>
+            {% for L in ['A','B','C','D'] %}
+            <option value="{{ L }}" {{ 'selected' if val == L }}>{{ L }}</option>
+            {% endfor %}
+          </select>
+        {% else %}{{ val or '—' }}{% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+
+  <table style="margin-top:14px;max-width:520px">
+    <tr><th colspan="2">Escala de calificación / Grading Scale / Tabella dei voti</th></tr>
+    {% for letra, rango, en, it, es in escala %}
+    <tr><td style="font-weight:700;white-space:nowrap">{{ letra }} &nbsp; {{ rango }}</td>
+        <td>{{ en }} / {{ it }} / {{ es }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Observaciones de comportamiento</h2>
+  <textarea name="observaciones_comportamiento" id="obs" oninput="cuenta()" maxlength="4000"
+    {{ '' if editable else 'readonly' }}>{{ est['observaciones_comportamiento'] or '' }}</textarea>
+  <div class="contador"><span id="cnt">0</span> / {{ max_palabras }} palabras</div>
+</div>
+
+<div class="panel acciones">
+  {% if editable %}<button class="btn">Guardar cambios</button>{% endif %}
+  <a class="btn sec" href="{{ url_for('boletas_pdf', eid=est['id']) }}">Generar boleta PDF</a>
+</div>
+</form>
+
+{% if editable %}
+<div class="panel">
+  <form method="post" action="{{ url_for('boletas_eliminar_estudiante', eid=est['id']) }}"
+        onsubmit="return confirm('¿Dar de baja a este estudiante? (borrado lógico)')">
+    <button class="btn peligro mini">Dar de baja al estudiante</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+function cuenta(){
+  const t = document.getElementById('obs').value.trim();
+  const n = t ? t.split(/\s+/).length : 0;
+  const el = document.getElementById('cnt');
+  el.textContent = n;
+  el.style.color = n > {{ max_palabras }} ? '#c0261e' : '#6b6b6b';
+}
+document.querySelectorAll('input.nota').forEach(inp => {
+  inp.addEventListener('input', () => {
+    const v = parseFloat(inp.value);
+    inp.classList.toggle('reprobado', !isNaN(v) && v < {{ nota_min|int }});
+  });
+});
+cuenta();
+</script>
+{% endblock %}

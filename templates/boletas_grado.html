@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}{{ grado['nombre'] }}{% endblock %}
+{% block body %}
+<h1>{{ grado['nombre'] }} <span class="muted">· {{ grado['anio'] }}</span></h1>
+<p class="sub">
+  {% if nivel == 'admin' %}<span class="pill ok">Acceso de edición</span>
+  {% else %}<span class="pill gris">Solo visualización</span>{% endif %}
+  <a href="{{ url_for('boletas_grados') }}">&larr; Todos los grados</a>
+</p>
+
+{% if nivel == 'admin' %}
+<div class="panel">
+  <h2 style="margin-top:0">Cursos del grado</h2>
+  <p class="muted">Estos cursos se asignan automáticamente a todos los estudiantes del grado.
+    Al agregar un curso, se agrega a los estudiantes ya inscritos.</p>
+  <table>
+    <tr><th>#</th><th>Curso</th><th style="width:220px">Acciones</th></tr>
+    {% for c in cursos_grado %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>
+        <form method="post" class="inline" style="gap:6px"
+              action="{{ url_for('boletas_grado_curso_editar', cgid=c['id']) }}">
+          <div style="flex:1"><input name="nombre" value="{{ c['nombre'] }}"></div>
+          <div><button class="btn mini sec" name="accion" value="renombrar">Renombrar</button></div>
+        </form>
+      </td>
+      <td>
+        <form method="post" action="{{ url_for('boletas_grado_curso_editar', cgid=c['id']) }}"
+              onsubmit="return confirm('¿Retirar «{{ c['nombre'] }}» del grado? Las notas ya registradas se conservan.')">
+          <button class="btn mini peligro" name="accion" value="eliminar">Retirar del grado</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="muted">Aún no hay cursos en este grado.</td></tr>
+    {% endfor %}
+  </table>
+  <form class="inline" method="post" action="{{ url_for('boletas_grado_curso_crear', gid=grado['id']) }}"
+        style="margin-top:12px">
+    <div style="flex:2"><label>Agregar curso(s)</label>
+      <input name="nombre" placeholder="Ej. Matemática — o varios separados por ; o por línea" required>
+    </div>
+    <div><button class="btn">Agregar al grado</button></div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Agregar estudiante</h2>
+  <form class="inline" method="post" action="{{ url_for('boletas_crear_estudiante', gid=grado['id']) }}">
+    <div><label>Nombres</label><input name="nombres" required></div>
+    <div><label>Apellidos</label><input name="apellidos" required></div>
+    <div><label>Código (opcional)</label><input name="codigo"></div>
+    <div><button class="btn">Agregar</button></div>
+  </form>
+  <hr style="border:0;border-top:1px solid var(--borde);margin:14px 0">
+  <a class="btn sec" href="{{ url_for('boletas_importar', gid=grado['id']) }}">Importar estudiantes y notas a este grado (Excel / CSV)</a>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="acciones" style="justify-content:space-between;align-items:baseline">
+    <h2 style="margin:0;border:0">Estudiantes
+      <span class="muted">· {{ cursos_grado|length }} curso(s) en el grado</span></h2>
+    <div class="acciones">
+      <span class="muted">Ordenar:</span>
+      <a class="btn mini {{ 'sec' if orden == 'promedio' }}"
+         href="{{ url_for('boletas_grado', gid=grado['id'], orden='nombre') }}">A–Z</a>
+      <a class="btn mini {{ 'sec' if orden != 'promedio' }}"
+         href="{{ url_for('boletas_grado', gid=grado['id'], orden='promedio') }}">Promedio ↓</a>
+    </div>
+  </div>
+
+  {% if promedio_grado is not none %}
+  <p style="margin:10px 0 0">
+    <span class="pill {{ 'err' if promedio_grado < nota_min else 'ok' }}"
+          style="font-size:14px">Promedio general del grado: {{ '%.2f'|format(promedio_grado) }}</span>
+    <span class="muted">(promedio de los promedios generales de los estudiantes con notas)</span>
+  </p>
+  {% endif %}
+
+  <table>
+    <tr>
+      {% if orden == 'promedio' %}<th>#</th>{% endif %}
+      <th>Apellidos, Nombres</th><th>Código</th><th>Promedio general</th><th></th>
+    </tr>
+    {% for e in estudiantes %}
+    <tr>
+      {% if orden == 'promedio' %}<td>{{ loop.index }}</td>{% endif %}
+      <td>{{ e['apellidos'] }}, {{ e['nombres'] }}</td>
+      <td>{{ e['codigo'] or '—' }}</td>
+      <td>
+        {% set p = proms.get(e['id']) %}
+        {% if p is not none %}
+          <span {% if p < nota_min %}class="reprobado"{% endif %}>{{ '%.2f'|format(p) }}</span>
+        {% else %}<span class="muted">sin notas</span>{% endif %}
+      </td>
+      <td class="acciones">
+        <a class="btn mini" href="{{ url_for('boletas_estudiante', eid=e['id']) }}">{{ 'Boleta / notas' if nivel=='admin' else 'Ver boleta' }}</a>
+        <a class="btn mini sec" href="{{ url_for('boletas_pdf', eid=e['id']) }}">PDF</a>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">Aún no hay estudiantes en este grado.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+{% if es_admin %}
+<div class="panel">
+  <h2 style="margin-top:0">Accesos de docentes a este grado</h2>
+  <form class="inline" method="post" action="{{ url_for('boletas_asignar_acceso', gid=grado['id']) }}">
+    <div><label>Docente</label>
+      <select name="usuario_id" required>
+        {% for d in docentes %}<option value="{{ d['id'] }}">{{ d['apellidos'] }}, {{ d['nombres'] }} ({{ d['username'] }})</option>{% endfor %}
+      </select>
+    </div>
+    <div><label>Nivel</label>
+      <select name="nivel">
+        <option value="ver">Solo visualizar</option>
+        <option value="admin">Administrador (editar notas)</option>
+      </select>
+    </div>
+    <div><button class="btn" name="accion" value="asignar">Asignar acceso</button></div>
+  </form>
+  <table>
+    <tr><th>Docente</th><th>Nivel</th><th></th></tr>
+    {% for a in accesos %}
+    <tr>
+      <td>{{ a['apellidos'] }}, {{ a['nombres'] }} ({{ a['username'] }})</td>
+      <td><span class="pill {{ 'ok' if a['nivel']=='admin' else 'gris' }}">{{ 'Administrador' if a['nivel']=='admin' else 'Solo visualizar' }}</span></td>
+      <td>
+        <form method="post" action="{{ url_for('boletas_asignar_acceso', gid=grado['id']) }}">
+          <input type="hidden" name="usuario_id" value="{{ a['usuario_id'] }}">
+          <button class="btn mini peligro" name="accion" value="quitar">Quitar</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="muted">Sin accesos asignados. El administrador siempre puede ver y editar.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endblock %}

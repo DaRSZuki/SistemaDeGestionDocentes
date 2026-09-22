@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Reportes de asistencia{% endblock %}
+{% block body %}
+<h1>Reportes de asistencia y puntualidad</h1>
+<p class="sub">Por docente y por año, con minutos de atraso por mes y total anual.</p>
+
+<div class="panel">
+  <form class="inline" method="get">
+    <div><label>Docente</label>
+      <select name="uid" required>
+        <option value="">— seleccione —</option>
+        {% for d in docentes %}
+        <option value="{{ d['id'] }}" {{ 'selected' if uid == d['id'] }}>{{ d['apellidos'] }}, {{ d['nombres'] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div><label>Año</label><input type="number" name="anio" value="{{ anio }}"></div>
+    <div><button class="btn">Ver reporte</button></div>
+  </form>
+</div>
+
+{% if docente %}
+<div class="panel">
+  <div class="acciones" style="justify-content:space-between">
+    <h2 style="margin:0;border:0">{{ docente['apellidos'] }}, {{ docente['nombres'] }} — {{ anio }}</h2>
+    <div class="acciones">
+      <a class="btn sec mini" href="{{ url_for('admin_reportes_pdf', uid=uid, anio=anio) }}">Descargar PDF</a>
+      <a class="btn sec mini" href="{{ url_for('admin_reportes_csv', uid=uid, anio=anio) }}">Descargar CSV</a>
+    </div>
+  </div>
+  <table>
+    <tr><th>Mes</th><th>Días presente</th><th>Ausencias</th><th>Justificadas</th>
+        <th>Días con atraso</th><th>Minutos de atraso</th><th>% Puntualidad</th></tr>
+    {% for f in filas %}
+    <tr>
+      <td>{{ f['mes'] }}</td><td>{{ f['presentes'] }}</td><td>{{ f['ausentes'] }}</td>
+      <td>{{ f['justificados'] }}</td><td>{{ f['dias_atraso'] }}</td>
+      <td {% if f['minutos_atraso'] > 0 %}class="reprobado"{% endif %}>{{ f['minutos_atraso'] }}</td>
+      <td>{{ '%.0f'|format(f['puntualidad']) }}%</td>
+    </tr>
+    {% endfor %}
+    <tr style="font-weight:700;background:#f0e6cf">
+      <td>TOTAL AÑO</td><td>{{ totales['presentes'] }}</td><td>{{ totales['ausentes'] }}</td>
+      <td>{{ totales['justificados'] }}</td><td>{{ totales['dias_atraso'] }}</td>
+      <td>{{ totales['minutos_atraso'] }}</td><td>{{ '%.0f'|format(totales['puntualidad']) }}%</td>
+    </tr>
+  </table>
+  <p class="muted">% Puntualidad = días con ingreso a la hora programada (o dentro de la tolerancia)
+  sobre el total de días con asistencia registrada.</p>
+</div>
+{% endif %}
+{% endblock %}

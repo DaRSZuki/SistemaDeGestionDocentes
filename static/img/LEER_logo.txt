@@ -1,0 +1,6 @@
+Coloque aquí el logo del colegio con el nombre exacto:  logo.png
+
+(Guarde en esta carpeta la imagen del escudo del Liceo Italiano Trilingüe que
+subió. Debe llamarse "logo.png". Opcionalmente, "logo.ico" para el icono del .exe.)
+
+Si no coloca el archivo, el sistema funciona igual: solo no se mostrará el logo.

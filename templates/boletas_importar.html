@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Importar notas{% endblock %}
+{% block body %}
+<h1>Importar estudiantes y notas</h1>
+<p class="sub">
+  {% if grado %}Destino fijo: <b>{{ grado['nombre'] }} · {{ grado['anio'] }}</b>
+    <a href="{{ url_for('boletas_grado', gid=grado['id']) }}">&larr; Volver al grado</a>
+  {% else %}Desde archivo <b>Excel (.xlsx)</b> o <b>CSV</b>.
+    <a href="{{ url_for('boletas_grados') }}">&larr; Volver a grados</a>
+  {% endif %}
+</p>
+
+<div class="panel">
+  <h2 style="margin-top:0">1. Descargue la plantilla</h2>
+  <p>Complete una fila por cada <b>estudiante y curso</b>. Si un estudiante tiene 4 cursos,
+     ocupará 4 filas con los mismos datos personales.</p>
+  <div class="acciones">
+    <a class="btn sec" href="{{ url_for('boletas_plantilla_xlsx') }}">Plantilla Excel (.xlsx)</a>
+    <a class="btn sec" href="{{ url_for('boletas_plantilla_csv') }}">Plantilla CSV</a>
+  </div>
+  <table style="margin-top:12px">
+    <tr><th>Columna</th><th>Descripción</th></tr>
+    <tr><td>grado</td><td>Nombre del grado (ej. «3 Primaria A»){% if grado %} — <i>se ignora, se usa {{ grado['nombre'] }}</i>{% endif %}</td></tr>
+    <tr><td>anio</td><td>Ciclo escolar{% if grado %} — <i>se ignora, se usa {{ grado['anio'] }}</i>{% endif %}</td></tr>
+    <tr><td>apellidos / nombres</td><td>Obligatorios</td></tr>
+    <tr><td>codigo</td><td>Opcional. Si lo usa, sirve para volver a identificar al estudiante en futuras importaciones</td></tr>
+    <tr><td>curso</td><td>Nombre del curso. Si no existe en el grado se agrega al catálogo del grado
+        (y queda disponible para todos sus estudiantes). Vacío = solo crea/actualiza el estudiante</td></tr>
+    <tr><td>u1, u2, u3, u4</td><td>Notas por unidad, 0 a 100. Vacío = sin registrar. El promedio se calcula solo</td></tr>
+    <tr><td>observaciones</td><td>Observaciones de comportamiento del estudiante (máx. 500 palabras)</td></tr>
+  </table>
+  <p class="muted">Sinónimos aceptados en los encabezados: «materia/asignatura» = curso,
+     «año/ciclo» = anio, «Unidad 1» = u1, «carnet/id» = codigo, etc.</p>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">2. Suba el archivo</h2>
+  <form method="post" enctype="multipart/form-data">
+    <input type="file" name="archivo" accept=".xlsx,.xlsm,.csv,text/csv" required>
+    <label style="font-weight:400;margin-top:12px">
+      <input type="checkbox" name="solo_validar" value="1" checked>
+      Solo validar (mostrar qué pasaría, sin guardar nada)
+    </label>
+    <br><br>
+    <button class="btn">Procesar archivo</button>
+  </form>
+  <p class="muted">Recomendado: primero valide. Si el resumen se ve bien, vuelva a subir el
+     mismo archivo <b>desmarcando</b> «Solo validar» para aplicar los cambios.</p>
+</div>
+
+{% if resumen %}
+<div class="panel">
+  <h2 style="margin-top:0">
+    {{ 'Resultado de la validación' if resumen['dry_run'] else 'Resultado de la importación' }}
+    {% if resumen['dry_run'] %}<span class="pill warn">no guardado</span>
+    {% else %}<span class="pill ok">aplicado</span>{% endif %}
+  </h2>
+  <div class="grid c4">
+    <div class="stat"><div class="n">{{ resumen['total_filas'] }}</div><div class="t">filas leídas</div></div>
+    <div class="stat"><div class="n">{{ resumen['estudiantes_creados'] }}</div><div class="t">estudiantes nuevos</div></div>
+    <div class="stat"><div class="n">{{ resumen['estudiantes_actualizados'] }}</div><div class="t">estudiantes actualizados</div></div>
+    <div class="stat"><div class="n">{{ resumen['cursos_creados'] }}</div><div class="t">cursos agregados al grado</div></div>
+    <div class="stat"><div class="n">{{ resumen['cursos_actualizados'] }}</div><div class="t">notas actualizadas</div></div>
+    <div class="stat"><div class="n">{{ resumen['notas_asignadas'] }}</div><div class="t">filas con notas</div></div>
+    <div class="stat"><div class="n">{{ resumen['grados_creados']|length }}</div><div class="t">grados nuevos</div></div>
+    <div class="stat"><div class="n">{{ resumen['errores']|length }}</div><div class="t">filas con error</div></div>
+  </div>
+
+  {% if resumen['grados_creados'] %}
+  <p style="margin-top:14px"><b>Grados {{ 'a crear' if resumen['dry_run'] else 'creados' }}:</b>
+     {{ resumen['grados_creados']|join(', ') }}</p>
+  {% endif %}
+  {% if resumen['grados_rechazados'] %}
+  <div class="flash error">
+    <b>Grados omitidos (sin permiso de edición):</b>
+    <ul>{% for g in resumen['grados_rechazados'] %}<li>{{ g }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  {% if resumen['errores'] %}
+  <div class="flash warn">
+    <b>Filas con problemas (no se importaron):</b>
+    <ul>{% for e in resumen['errores'] %}<li>{{ e }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  {% if resumen['dry_run'] and not resumen['errores'] and not resumen['grados_rechazados'] %}
+  <p class="flash ok">Todo correcto. Vuelva a subir el archivo desmarcando «Solo validar» para guardar.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

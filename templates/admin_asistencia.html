@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Ajuste de asistencia{% endblock %}
+{% block body %}
+<h1>Asistencia — justificación y ajuste</h1>
+<p class="sub">Modifique asistencias o inasistencias en caso de justificación. Puede añadir una
+observación (máximo {{ max_palabras }} palabras).</p>
+
+<div class="panel">
+  <form class="inline" method="get">
+    <div><label>Docente</label>
+      <select name="uid" onchange="this.form.submit()">
+        <option value="">— seleccione —</option>
+        {% for d in docentes %}
+        <option value="{{ d['id'] }}" {{ 'selected' if uid == d['id'] }}>{{ d['apellidos'] }}, {{ d['nombres'] }} ({{ d['username'] }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div><label>Desde</label><input type="date" name="desde" value="{{ desde }}"></div>
+    <div><label>Hasta</label><input type="date" name="hasta" value="{{ hasta }}"></div>
+    <div><button class="btn">Filtrar</button></div>
+  </form>
+</div>
+
+{% if uid %}
+<div class="panel">
+  <h2 style="margin-top:0">Registrar / ajustar un día</h2>
+  <form method="post" action="{{ url_for('admin_asistencia_guardar') }}">
+    <input type="hidden" name="usuario_id" value="{{ uid }}">
+    <input type="hidden" name="desde" value="{{ desde }}">
+    <input type="hidden" name="hasta" value="{{ hasta }}">
+    <div class="grid c4">
+      <div><label>Fecha</label><input type="date" name="fecha" required></div>
+      <div><label>Estado</label>
+        <select name="estado" id="estado" onchange="toggle()">
+          <option value="presente">Presente</option>
+          <option value="justificado">Justificado (falta con permiso)</option>
+          <option value="permiso">Permiso / atraso justificado</option>
+          <option value="ausente">Ausente</option>
+        </select>
+      </div>
+      <div class="hora"><label>Hora entrada</label><input type="time" name="hora_entrada" step="1"></div>
+      <div class="hora"><label>Hora salida</label><input type="time" name="hora_salida" step="1"></div>
+      <div class="hora"><label>Minutos de atraso</label><input type="number" name="minutos_atraso" min="0" value="0"></div>
+    </div>
+    <label>Observación / justificación</label>
+    <textarea name="observacion" id="obs" oninput="cuenta()" maxlength="4000"
+      placeholder="Motivo de la justificación, número de constancia, etc."></textarea>
+    <div class="contador"><span id="cnt">0</span> / {{ max_palabras }} palabras</div>
+    <br><button class="btn">Guardar registro</button>
+  </form>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Registros del período</h2>
+  <table>
+    <tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Atraso</th><th>Estado</th><th>Observación</th><th>Ajustado por</th></tr>
+    {% for r in registros %}
+    <tr>
+      <td>{{ r['fecha'] }}</td>
+      <td>{{ r['hora_entrada'] or '—' }}</td>
+      <td>{{ r['hora_salida'] or '—' }}</td>
+      <td>{% if r['minutos_atraso'] and r['minutos_atraso'] > 0 %}<span class="reprobado">{{ r['minutos_atraso'] }}</span>{% else %}0{% endif %}</td>
+      <td>{{ r['estado']|capitalize }}</td>
+      <td class="muted">{{ r['observacion'] or '' }}</td>
+      <td class="muted">{% if r['modificado_admin'] %}{{ r['mod_apellidos'] }} {{ r['modificado_en'][:16] if r['modificado_en'] }}{% endif %}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">Sin registros en el período seleccionado.</td></tr>
+    {% endfor %}
+  </table>
+  <p class="muted">Para editar un día ya existente, vuelva a registrarlo con la misma fecha: se
+  sobrescribe el registro.</p>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+function toggle(){
+  const est = document.getElementById('estado').value;
+  const ocultar = (est === 'ausente' || est === 'justificado');
+  document.querySelectorAll('.hora').forEach(d => d.style.opacity = ocultar ? .4 : 1);
+}
+function cuenta(){
+  const t = document.getElementById('obs').value.trim();
+  const n = t ? t.split(/\s+/).length : 0;
+  const el = document.getElementById('cnt');
+  el.textContent = n;
+  el.style.color = n > {{ max_palabras }} ? '#c0261e' : '#6b6b6b';
+}
+toggle();
+</script>
+{% endblock %}

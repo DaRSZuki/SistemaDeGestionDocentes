@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingreso — Liceo Italiano Trilingüe</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="icon" href="{{ url_for('logo_png') }}">
+</head>
+<body>
+<div class="login-wrap">
+  <img src="{{ url_for('logo_png') }}" alt="Logo"
+       onerror="this.style.display='none'">
+  <div class="panel">
+    <h1>Liceo Italiano Trilingüe</h1>
+    <p class="sub">Sistema de Gestión y Administración</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+    <form method="post" style="text-align:left">
+      <label>Usuario</label>
+      <input name="username" autofocus required>
+      <label>Contraseña</label>
+      <input type="password" name="password" required>
+      <br><br>
+      <button class="btn" style="width:100%">Ingresar</button>
+    </form>
+  </div>
+  <p class="muted">Si no tiene credenciales, solicítelas al administrador.</p>
+</div>
+<script>
+  // Marca esta pestaña como sesión válida. Se borra sola al cerrar la pestaña,
+  // lo que fuerza el cierre de sesión la próxima vez que se abra.
+  try { sessionStorage.setItem('liceo_sesion', '1'); } catch (e) {}
+</script>
+</body>
+</html>

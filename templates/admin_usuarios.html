@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Usuarios{% endblock %}
+{% block body %}
+<h1>Usuarios</h1>
+<p class="sub">Crear credenciales, asignar función de boletas y dar de baja (borrado lógico).</p>
+
+<div class="panel">
+  <h2 style="margin-top:0">Nuevo usuario</h2>
+  <form method="post" action="{{ url_for('admin_crear_usuario') }}">
+    <div class="grid c2">
+      <div><label>Nombres</label><input name="nombres" required></div>
+      <div><label>Apellidos</label><input name="apellidos" required></div>
+      <div><label>Usuario (para iniciar sesión)</label><input name="username" required></div>
+      <div><label>Contraseña</label><input name="password" required></div>
+      <div><label>Rol</label>
+        <select name="rol"><option value="docente">Docente</option><option value="admin">Administrador</option></select>
+      </div>
+      <div><label>&nbsp;</label>
+        <label style="font-weight:400"><input type="checkbox" name="puede_boletas"> Habilitar función de boletas de calificaciones</label>
+      </div>
+    </div>
+    <br><button class="btn">Crear usuario</button>
+    <span class="muted">Se crea automáticamente un horario Lunes–Viernes 07:30–14:30 (editable).</span>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="acciones" style="justify-content:space-between">
+    <h2 style="margin:0;border:0">Listado</h2>
+    <a class="btn sec mini" href="{{ url_for('admin_usuarios', bajas='0' if incluir_baja else '1') }}">
+      {{ 'Ocultar dados de baja' if incluir_baja else 'Mostrar dados de baja' }}
+    </a>
+  </div>
+  <table>
+    <tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Boletas</th><th>Estado</th><th>Acciones</th></tr>
+    {% for u in usuarios %}
+    <tr>
+      <td>{{ u['apellidos'] }}, {{ u['nombres'] }}</td>
+      <td>{{ u['username'] }}</td>
+      <td>{{ u['rol']|capitalize }}</td>
+      <td>{{ 'Sí' if u['puede_boletas'] else 'No' }}</td>
+      <td>{% if u['activo'] %}<span class="pill ok">Activo</span>{% else %}<span class="pill err">Baja {{ u['dado_baja_en'][:10] if u['dado_baja_en'] }}</span>{% endif %}</td>
+      <td class="acciones">
+        <button class="btn mini sec" onclick="document.getElementById('e{{ u['id'] }}').hidden = !document.getElementById('e{{ u['id'] }}').hidden">Editar</button>
+        <a class="btn mini sec" href="{{ url_for('admin_horarios', uid=u['id']) }}">Horarios</a>
+        {% if u['activo'] %}
+          <form method="post" action="{{ url_for('admin_baja_usuario', uid=u['id']) }}" onsubmit="return confirm('¿Dar de baja a {{ u['username'] }}? Sus datos se conservan.')">
+            <button class="btn mini peligro">Dar de baja</button>
+          </form>
+        {% else %}
+          <form method="post" action="{{ url_for('admin_reactivar_usuario', uid=u['id']) }}">
+            <button class="btn mini">Reactivar</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+    <tr id="e{{ u['id'] }}" hidden><td colspan="6">
+      <form method="post" action="{{ url_for('admin_editar_usuario', uid=u['id']) }}?bajas={{ '1' if incluir_baja else '0' }}">
+        <div class="grid c2">
+          <div><label>Nombres</label><input name="nombres" value="{{ u['nombres'] }}"></div>
+          <div><label>Apellidos</label><input name="apellidos" value="{{ u['apellidos'] }}"></div>
+          <div><label>Rol</label>
+            <select name="rol">
+              <option value="docente" {{ 'selected' if u['rol']=='docente' }}>Docente</option>
+              <option value="admin" {{ 'selected' if u['rol']=='admin' }}>Administrador</option>
+            </select>
+          </div>
+          <div><label>Nueva contraseña (opcional)</label><input name="password" placeholder="dejar vacío para no cambiar"></div>
+          <div><label>&nbsp;</label>
+            <label style="font-weight:400"><input type="checkbox" name="puede_boletas" {{ 'checked' if u['puede_boletas'] }}> Función de boletas</label>
+          </div>
+        </div>
+        <br><button class="btn mini">Guardar cambios</button>
+      </form>
+    </td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

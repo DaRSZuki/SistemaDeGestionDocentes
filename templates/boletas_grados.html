@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Grados y boletas{% endblock %}
+{% block body %}
+<h1>Grados y boletas de calificaciones</h1>
+<p class="sub">Cree grados, luego agregue estudiantes y sus cursos con notas por unidad.</p>
+
+<div class="panel acciones">
+  <a class="btn" href="{{ url_for('boletas_importar') }}">Importar desde Excel / CSV</a>
+  <span class="muted">Carga masiva de estudiantes y notas ya existentes.</span>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Nuevo grado</h2>
+  <form class="inline" method="post" action="{{ url_for('boletas_crear_grado') }}">
+    <div><label>Nombre del grado</label><input name="nombre" placeholder="Ej. 3° Primaria A" required></div>
+    <div><label>Año / ciclo</label><input type="number" name="anio" value="{{ anio_actual }}"></div>
+    <div><button class="btn">Crear grado</button></div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Grados</h2>
+  <table>
+    <tr><th>Grado</th><th>Año</th><th>Estudiantes</th>{% if not es_admin %}<th>Mi acceso</th>{% endif %}<th></th></tr>
+    {% for g in grados %}
+    <tr>
+      <td>{{ g['nombre'] }}</td>
+      <td>{{ g['anio'] }}</td>
+      <td>{{ conteos.get(g['id'], 0) }}</td>
+      {% if not es_admin %}<td><span class="pill {{ 'ok' if g['nivel']=='admin' else 'gris' }}">{{ 'Editar' if g['nivel']=='admin' else 'Solo ver' }}</span></td>{% endif %}
+      <td><a class="btn mini" href="{{ url_for('boletas_grado', gid=g['id']) }}">Abrir</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">No hay grados asignados.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

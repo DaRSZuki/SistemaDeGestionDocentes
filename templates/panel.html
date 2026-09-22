@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Mi asistencia{% endblock %}
+{% block body %}
+<h1>Hola, {{ usuario['nombres'] }} {{ usuario['apellidos'] }}</h1>
+<p class="sub">{{ dia_semana_es }} {{ ahora.strftime('%d/%m/%Y') }} — hora del sistema
+  <b id="reloj">{{ ahora.strftime('%H:%M:%S') }}</b></p>
+
+<div class="grid c2">
+  <div class="panel">
+    <h2 style="margin-top:0">Registro de hoy</h2>
+    {% if horario_hoy and horario_hoy['laborable'] %}
+      <p class="muted">Horario programado hoy:
+        entrada <b>{{ horario_hoy['hora_entrada'] }}</b> ·
+        salida <b>{{ horario_hoy['hora_salida'] }}</b> ·
+        tolerancia {{ horario_hoy['tolerancia_min'] }} min</p>
+    {% else %}
+      <p class="muted">Hoy no es un día laborable según su horario.</p>
+    {% endif %}
+
+    <table>
+      <tr><th>Entrada</th><td>
+        {% if asis and asis['hora_entrada'] %}{{ asis['hora_entrada'] }}
+          {% if asis['minutos_atraso'] and asis['minutos_atraso'] > 0 %}
+            <span class="pill warn">+{{ asis['minutos_atraso'] }} min</span>
+          {% else %}<span class="pill ok">Puntual</span>{% endif %}
+        {% else %}<span class="pill gris">sin marcar</span>{% endif %}
+      </td></tr>
+      <tr><th>Salida</th><td>
+        {% if asis and asis['hora_salida'] %}{{ asis['hora_salida'] }}
+        {% else %}<span class="pill gris">sin marcar</span>{% endif %}
+      </td></tr>
+      {% if asis and asis['estado'] not in ('presente',) %}
+      <tr><th>Estado</th><td><span class="pill err">{{ asis['estado']|capitalize }}</span></td></tr>
+      {% endif %}
+    </table>
+
+    <div class="acciones" style="margin-top:14px">
+      <form method="post" action="{{ url_for('marcar_entrada') }}">
+        <button class="btn" {{ 'disabled' if asis and asis['hora_entrada'] }}>Marcar entrada</button>
+      </form>
+      <form method="post" action="{{ url_for('marcar_salida') }}">
+        <button class="btn sec" {{ 'disabled' if not (asis and asis['hora_entrada']) or (asis and asis['hora_salida']) }}>Marcar salida</button>
+      </form>
+    </div>
+    <p class="muted" style="margin-top:10px">La hora se toma automáticamente del sistema al presionar el botón.</p>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-top:0">Este mes</h2>
+    <div class="grid c2">
+      <div class="stat"><div class="n">{{ mes_resumen['dias'] or 0 }}</div><div class="t">días con atraso</div></div>
+      <div class="stat"><div class="n">{{ mes_resumen['min'] or 0 }}</div><div class="t">minutos de atraso</div></div>
+    </div>
+    <p style="margin-top:14px"><a class="btn sec mini" href="{{ url_for('mis_asistencias') }}">Ver mi historial completo</a></p>
+  </div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">Mi horario semanal</h2>
+  <table>
+    <tr><th>Día</th><th>Laborable</th><th>Entrada</th><th>Salida</th><th>Tolerancia</th></tr>
+    {% for h in horarios %}
+    <tr {% if h['dia_semana'] == hoy_idx %}style="font-weight:700;background:#fbf3df"{% endif %}>
+      <td>{{ dias[h['dia_semana']] }}</td>
+      <td>{{ 'Sí' if h['laborable'] else 'No' }}</td>
+      <td>{{ h['hora_entrada'] or '—' }}</td>
+      <td>{{ h['hora_salida'] or '—' }}</td>
+      <td>{{ h['tolerancia_min'] }} min</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="muted">Los horarios los define el administrador.</p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const r = document.getElementById('reloj');
+setInterval(() => { r.textContent = new Date().toLocaleTimeString(); }, 1000);
+</script>
+{% endblock %}
