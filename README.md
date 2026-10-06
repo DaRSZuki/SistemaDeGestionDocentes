@@ -14,8 +14,7 @@ de datos SQLite portátil.
 
 Proyecto full-stack propio (backend, frontend, base de datos, generación de
 documentos y empaquetado de escritorio), desarrollado de punta a punta
-—modelo de datos, lógica de negocio, interfaz y seguridad— para un caso de
-uso real de un colegio.
+—modelo de datos, lógica de negocio, interfaz y seguridad
 
 ---
 
